@@ -1,0 +1,29 @@
+SELECT
+	relname AS object_name ,
+	pg_size_pretty (pg_table_size (fed.oid)) AS data_size ,
+	pg_size_pretty (pg_indexes_size (fed.oid)) AS index_size ,
+	pg_size_pretty (pg_total_relation_size ( fed . oid )) AS total_size
+FROM pg_class fed
+JOIN pg_namespace n ON n.oid = fed.relnamespace
+WHERE fed.relkind = 'r' AND n.nspname = 'public'
+ORDER BY pg_total_relation_size (fed.oid) DESC;
+
+-- Step 1 : Check current size of 'payment ' indexes
+SELECT pg_size_pretty ( pg_indexes_size ( 'payment ' ) ) ;
+
+-- Step 2: Create a heavy index on payment_date
+CREATE INDEX idx_payment_date_long ON payment (payment_date , amount,
+customer_id ) ;
+
+-- Step 3: Check size again
+SELECT pg_size_pretty ( pg_indexes_size ( 'payment ' ) ) ;
+
+-- Create Partial Index --
+CREATE INDEX idx_expensive_films
+ON film (replacement_cost)
+WHERE replacement_cost > 25.00;
+
+--Find the size of this specific index--
+SELECT relname , pg_size_pretty (pg_relation_size (relid))
+FROM pg_stat_user_indexes
+WHERE relname = 'idx_expensive_films' ;
